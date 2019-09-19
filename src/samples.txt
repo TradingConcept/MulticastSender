@@ -1,0 +1,58 @@
+
+// https://computingforgeeks.com/how-to-install-mariadb-on-fedora/
+
+template <typename T>
+T Sumar(T a, T b)
+{
+    return a + b;
+}
+
+struct MyOddWordsStruct
+{
+    // define a 3-bit signed word
+    char a : 3;
+
+    // define multiple bits together
+
+    unsigned char b : 2, c : 5, d : 1;
+
+    // cada vez que pasas de signed a unsigned (o viceversa) se agarra otro byte, quedaría así en memoria
+    // aaa-----bbcccccd
+};
+
+struct MyUnionkk
+{
+    // define a 3-bit signed word
+    union main {
+        char x : 8;
+    };
+
+    char a : 4;
+    char b : 4;
+};
+
+
+    // -------------------------------------------------------------
+
+    int i = 1;
+    auto lambda = [=](int a, int b) { return a + b + i; };
+    i++;
+    std::cout << "lambda(2,3) = " << lambda(2, 3) << std::endl;
+
+    // -------------------------------------------------------------
+
+    int x0 = 1, x1 = 2, x2 = Sumar(x0, x1);
+    std::cout << x0 << " + " << x1 << " = " << x2 << std::endl;
+
+    double y0 = 1.2, y1 = 2.3, y2 = Sumar(y0, y1);
+    std::cout << y0 << " + " << y1 << " = " << y2 << std::endl;
+
+    // -------------------------------------------------------------
+
+    MyOddWordsStruct s;
+    s.a = 0b111;
+    s.a = 7;
+    // s.a = 8 ; // no compila pues se pasa de la capacidad de almacenamiento
+    // s.b = 4 ; // no compila pues se pasa
+
+    // -------------------------------------------------------------
