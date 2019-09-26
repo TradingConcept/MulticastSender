@@ -1,6 +1,10 @@
+#include <fstream>
+#include <regex>
+#include "LoggingLib.hpp"
 #include "MulticastSenderLib.hpp"
+#include "Helpers.hpp"
 
-const int max_message_count = 5;
+const int MAX_MESSAGE_COUNT = 5;
 
 MulticastSenderLib::MulticastSenderLib(boost::asio::io_service &io_service, const boost::asio::ip::address &multicast_address, const short multicast_port)
     : endpoint_(multicast_address, multicast_port),
@@ -8,12 +12,12 @@ MulticastSenderLib::MulticastSenderLib(boost::asio::io_service &io_service, cons
       timer_(io_service),
       message_count_(0)
 {
-    LOG("MulticastSenderLib Constructor");
+    Logging::Info("MulticastSenderLib Constructor");
 }
 
 MulticastSenderLib::~MulticastSenderLib()
 {
-    LOG("MulticastSenderLib Destructor");    
+    Logging::Info("MulticastSenderLib Destructor");
     this->socket_.close();
 }
 
@@ -21,19 +25,21 @@ void MulticastSenderLib::on_timer(const boost::system::error_code &error)
 {
     if (!error)
     {
-        LOG("MulticastSenderLib::on_timer timeout");
+        Logging::Info("MulticastSenderLib::on_timer timeout");
         this->AsyncSendTo("timeout");
     }
     else
     {
-        LOG("MulticastSenderLib::on_timer error");
+        Logging::Info("MulticastSenderLib::on_timer error");
     }
 }
 
 void MulticastSenderLib::AsyncSendTo(std::string origin)
 {
 
-    LOG("Sending " << origin << " Message " << message_count_);
+    std::stringstream s ;
+    s << "Sending " << origin << " Message " << message_count_ ;
+    Logging::Info(s);
 
     std::ostringstream message;
     message << "Message " << message_count_++;
@@ -41,7 +47,7 @@ void MulticastSenderLib::AsyncSendTo(std::string origin)
     auto buffer = boost::asio::buffer(message.str());
     socket_.send_to(buffer, endpoint_);
 
-    if (message_count_ < max_message_count)
+    if (message_count_ < MAX_MESSAGE_COUNT)
     {
         timer_.expires_from_now(boost::posix_time::seconds(1));
         timer_.async_wait(boost::bind(&MulticastSenderLib::on_timer, this, boost::asio::placeholders::error));
@@ -61,8 +67,49 @@ int MulticastSenderLib::Test2()
 // estática
 void MulticastSenderLib::Run(const std::string FileName, const std::string Address, const short Port)
 {
+    std::stringstream s ;
 
-    LOG("MulticastSender Run " << Address << ":" << Port << " de " << FileName);
+    // adicionamos el home
+    auto ConvertedFileName = std::regex_replace( FileName, std::regex("^\\~"), getenv("HOME") ) ;
+
+    s.str("");
+    s << "MulticastSender Run " << Address << ":" << Port << " de " << ConvertedFileName;
+    Logging::Info(s);
+
+    std::ifstream myfile( ConvertedFileName );
+    if( !myfile.is_open() )
+    {
+        s.str("");
+        s << "File " << ConvertedFileName << " cannot be open" ;
+        Logging::Error(s);
+        return ;
+    }
+    else
+    {
+        int i = 0 ;
+        std::string line ;
+        for( int i = 0 ; i < MAX_MESSAGE_COUNT && getline( myfile, line ); i++ )
+        {
+            Logging::Info( line );
+
+            auto buffer = line.substr(25, line.length() - 42 ) ;
+            if( buffer.length() >= 18)
+            {
+                Logging::Warn( buffer );
+
+                auto binary = Helpers::base64_decode( buffer ) ;
+
+                auto secuencia = Helpers::GetSecuenciaBiva( binary );
+                s.str("");
+                s << secuencia ;
+                Logging::Error( s );
+            }
+
+        }
+        myfile.close();
+    }
+
+
     auto multicast_address = boost::asio::ip::address::from_string(Address);
 
     try
@@ -75,6 +122,7 @@ void MulticastSenderLib::Run(const std::string FileName, const std::string Addre
     }
     catch (std::exception &e)
     {
-        std::cerr << boost::posix_time::microsec_clock::local_time() << " Exception: " << e.what() << "\n";
+        s.str(e.what());
+        Logging::Error(s);
     }
 }

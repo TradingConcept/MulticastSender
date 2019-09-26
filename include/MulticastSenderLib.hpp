@@ -12,14 +12,14 @@
 
 // Ver https://code.visualstudio.com/docs/languages/cpp cuando haya problemas con paths
 
-#ifndef LOG
-#define LOG(x)                                                         \
-    {                                                                  \
-        std::stringstream str;                                         \
-        str << boost::posix_time::microsec_clock::local_time();        \
-        std::cout << str.str().substr(0, 24) << " " << x << std::endl; \
-    }
-#endif
+//#ifndef LOG
+//#define LOG(x)                                                         \
+//    {                                                                  \
+//        std::stringstream str;                                         \
+//        str << boost::posix_time::microsec_clock::local_time();        \
+//        std::cout << str.str().substr(0, 24) << " " << x << std::endl; \
+//    }
+//#endif
 
 class MulticastSenderLib
 {
